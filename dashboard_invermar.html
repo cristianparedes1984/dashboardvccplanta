@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard VCC · Invermar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #0D2257;
+    --blue:   #1A4DAA;
+    --sky:    #3A7BD5;
+    --wave:   #5B9CEC;
+    --light:  #EEF4FB;
+    --border: #D5E3F5;
+    --text:   #1A2840;
+    --muted:  #6B85A8;
+    --green:  #22C55E;
+    --yellow: #F59E0B;
+    --orange: #F97316;
+    --red:    #EF4444;
+    --white:  #FFFFFF;
+    --shadow: 0 1px 4px rgba(13,34,87,.08), 0 4px 16px rgba(13,34,87,.06);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #F5F8FF;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--white);
+    border-bottom: 2px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(13,34,87,.07);
+  }
+  .logo-wrap img { height: 38px; display: block; }
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .header-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: .4px;
+  }
+  .header-update {
+    font-size: 11.5px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .update-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:.4; }
+  }
+
+  /* ── LAYOUT ── */
+  main { max-width: 1300px; margin: 0 auto; padding: 28px 24px 48px; }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-left: 3px;
+  }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+  .card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--light);
+    color: var(--blue);
+  }
+
+  /* ── KPI STRIP ── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(13,34,87,.1); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent-color, var(--blue));
+  }
+  .kpi-month { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .kpi-pct { font-size: 34px; font-weight: 700; line-height: 1; color: var(--kpi-color, var(--navy)); font-family: 'DM Sans', sans-serif; }
+  .kpi-sub { font-size: 11.5px; color: var(--muted); margin-top: 5px; font-family: 'DM Mono', monospace; }
+  .kpi-delta { font-size: 11px; font-weight: 600; margin-top: 6px; }
+  .delta-up { color: var(--green); } .delta-down { color: var(--red); }
+
+  /* ── BAR CHART (tendencia) ── */
+  .bar-chart-wrap { padding: 0 4px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 18px; height: 140px; padding: 0 8px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar-outer { width: 100%; background: var(--light); border-radius: 8px 8px 0 0; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
+  .bar-fill {
+    width: 100%; border-radius: 8px 8px 0 0;
+    transition: height .8s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+  }
+  .bar-fill::after {
+    content: attr(data-val);
+    position: absolute;
+    top: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .bar-label { font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
+  .bar-sub { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* ── PROGRESS BARS ── */
+  .prog-list { display: flex; flex-direction: column; gap: 11px; }
+  .prog-row { display: flex; flex-direction: column; gap: 4px; }
+  .prog-meta { display: flex; justify-content: space-between; align-items: center; }
+  .prog-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
+  .prog-val  { font-size: 11.5px; font-family: 'DM Mono', monospace; color: var(--muted); font-weight: 500; }
+  .prog-track { height: 7px; background: var(--light); border-radius: 99px; overflow: hidden; }
+  .prog-bar {
+    height: 100%; border-radius: 99px;
+    transition: width 1s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* ── TABLE ── */
+  .filter-row {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .filter-row input, .filter-row select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12.5px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .filter-row input:focus, .filter-row select:focus { border-color: var(--sky); }
+  .filter-row input { width: 200px; }
+  .count-badge {
+    margin-left: auto;
+    font-size: 11.5px; font-weight: 600;
+    color: var(--blue);
+    background: var(--light);
+    border-radius: 20px;
+    padding: 4px 10px;
+  }
+
+  .tbl-wrap { overflow-x: auto; border-radius: 10px; border: 1.5px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead { background: var(--navy); }
+  thead th { color: var(--white); font-weight: 600; padding: 11px 14px; text-align: left; letter-spacing: .3px; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--light); }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  .td-code { font-family: 'DM Mono', monospace; color: var(--muted); font-size: 11.5px; }
+  .td-name { font-weight: 500; color: var(--text); }
+  .td-sec { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--light); color: var(--blue); white-space: nowrap; }
+  .td-cargo { color: var(--muted); font-size: 11.5px; }
+
+  /* month pills */
+  .pill { display: inline-block; width: 36px; text-align: center; padding: 3px 0; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .pill-si { background: #DCFCE7; color: #15803D; }
+  .pill-no { background: #FEE2E2; color: #B91C1C; }
+
+  /* total dots */
+  .dots { display: flex; gap: 3px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .dot-si { background: var(--green); }
+  .dot-no { background: #E2E8F0; }
+  .dots-label { font-size: 11.5px; font-weight: 700; color: var(--text); margin-left: 6px; font-family: 'DM Mono', monospace; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .kpi-strip { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 520px) {
+    .kpi-strip { grid-template-columns: 1fr 1fr; }
+    header { padding: 0 16px; }
+    main { padding: 16px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-wrap">
+    <img src="data:image/jpeg;base64,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8Se6ZfJcim8c29DHaeObehjtPiWm+b8Se6ZfJcim8c29DHaeObehjtfIADFlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqNp6geAAAAAAAAA92nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6ngAAAAAAA92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqNp6geAAAAAAA92nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6nm0gAAAAAAA92nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6jaeoHgAAAAAA92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6ngAAAAAAAPdp6geD3aeo2nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4G0gAAAAAAAAAAAAAAAAAAAAAPdpB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqeAAAAAAAA92nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqeAAAAAAAAAAAAAAAA92nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6jaeoHg92nqeAAAAAAAAAAAAAA92nqB4Pdp6jaeoHg92nqNp6geD3aeo2nqB4Pdp6jaeoHgAAAAAAA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" alt="Invermar">
+  </div>
+  <div class="header-meta">
+    <span class="header-title">Cumplimiento VCC · LGF</span>
+    <span class="header-update"><span class="update-dot"></span>Actualizado: 08 Abril 2026</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- TENDENCIA MENSUAL -->
+  <p class="section-label">Tendencia mensual</p>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+      <span class="card-title">Cumplimiento mensual · 2026</span>
+      <span class="card-badge">38 personas</span>
+    </div>
+    <div class="bar-chart-wrap">
+      <div class="bar-chart" id="barChart" style="height:160px; align-items:flex-end;"></div>
+    </div>
+  </div>
+
+  <!-- DOS COLUMNAS: sección + cargo -->
+  <p class="section-label">Cumplimiento por sección y cargo — Abril</p>
+  <div class="grid-2" style="margin-bottom:24px;">
+
+    <!-- POR SECCIÓN -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Por Sección</span>
+      </div>
+      <div class="prog-list" id="secList"></div>
+    </div>
+
+    <!-- POR CARGO -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Por Cargo</span>
+      </div>
+      <div class="prog-list" id="cargoList"></div>
+    </div>
+  </div>
+
+  <!-- DETALLE INDIVIDUAL -->
+  <p class="section-label">Detalle individual</p>
+  <div class="card">
+    <div class="filter-row">
+      <input type="text" id="searchInput" placeholder="Buscar nombre, sección o cargo…" oninput="filterTable()">
+      <select id="secFilter" onchange="filterTable()">
+        <option value="">Todas las secciones</option>
+      </select>
+      <select id="mesFilter" onchange="filterTable()">
+        <option value="">Todos los meses</option>
+        <option value="enero">Enero</option>
+        <option value="febrero">Febrero</option>
+        <option value="marzo">Marzo</option>
+        <option value="abril">Abril</option>
+      </select>
+      <select id="cumFilter" onchange="filterTable()">
+        <option value="">Todos</option>
+        <option value="SI">Cumple</option>
+        <option value="NO">No cumple</option>
+      </select>
+      <span class="count-badge" id="countBadge">38 personas</span>
+    </div>
+    <div class="tbl-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Sección</th>
+            <th>Cargo</th>
+            <th>Enero</th>
+            <th>Febrero</th>
+            <th>Marzo</th>
+            <th>Abril</th>
+            <th>Total ✓</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const data = [
+  {codigo:600041,nombre:"Álvarez Mancilla Roxana Pamela",cargo:"Supervisor de Producción",seccion:"Empaq Filete Fresco",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600098,nombre:"Barrientos Aguilar Francisco Javier",cargo:"Supervisor de Producción",seccion:"Filete",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600225,nombre:"Cuyul Haro Hugo Marcelo",cargo:"Supervisor de Mantención",seccion:"Mantenimiento Planta",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600465,nombre:"Mella Villarroel Carlos Martin",cargo:"Supervisor de Producción",seccion:"Empaq HONG/HG",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600494,nombre:"Monsalves Diaz Juan Arnoldo",cargo:"Supervisor de Producción",seccion:"Porciones",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600615,nombre:"Pereda Vera José Onofre",cargo:"Supervisor de Planta de Riles",seccion:"Riles",enero:"NO",febrero:"NO",marzo:"NO",abril:"NO"},
+  {codigo:600618,nombre:"Pérez Gallardo Fabian Alfonso",cargo:"Supervisor de Mantención",seccion:"Mantenimiento Planta",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"},
+  {codigo:600732,nombre:"Sepúlveda Aguilar Osvaldo Enrique",cargo:"Supervisor de Mantención",seccion:"Mantenimiento Planta",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"},
+  {codigo:600740,nombre:"Silva Flores Claudio Andres",cargo:"Jefe de Turno de Producción",seccion:"Control de Producción",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600790,nombre:"Urrestarazu Pérez Bernarda Ivette",cargo:"Supervisor de Producción",seccion:"Spoon",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:600833,nombre:"Vera González Sandra Paola",cargo:"Jefe de Turno de Producción",seccion:"Control de Producción",enero:"SI",febrero:"SI",marzo:"SI",abril:"SI"},
+  {codigo:601140,nombre:"Ule Vásquez Manuel Marcelo",cargo:"Supervisor de Producción",seccion:"Porciones",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:601250,nombre:"Chacon Triviño Ercira Maribel",cargo:"Supervisor de Producción",seccion:"Filete",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:601313,nombre:"Muñoz Mora Anselmo Eduardo",cargo:"Supervisor de Producción",seccion:"Sala de Control",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:601399,nombre:"Bahamonde Muñoz José Patricio",cargo:"Supervisor de Frigorífico",seccion:"Frigorífico",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"},
+  {codigo:601931,nombre:"Mardones Aguila Felix Alberto",cargo:"Supervisor de Producción",seccion:"Eviscerado y Calibra",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:601956,nombre:"Valdebenito Poblete Richard Jhon",cargo:"Supervisor de Producción",seccion:"Eviscerado y Calibra",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:601960,nombre:"Miralles Muñoz Cristian Rodrigo",cargo:"Supervisor de Producción",seccion:"Empaq HONG/HG",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:604162,nombre:"Currimil Pérez Carlos Patricio",cargo:"Supervisor de Higiene",seccion:"Higiene",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:604375,nombre:"Gallardo Maldonado Sebastian Andres",cargo:"Supervisor de Producción",seccion:"Tuneles S-continuos",enero:"NO",febrero:"NO",marzo:"SI",abril:"NO"},
+  {codigo:604914,nombre:"Santos Santos Alejandro Antonio",cargo:"Supervisor de Producción",seccion:"Spoon",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"},
+  {codigo:605042,nombre:"Ruiz Caipillan Juan Carlos",cargo:"Supervisor de Frigorífico",seccion:"Frigorífico",enero:"NO",febrero:"NO",marzo:"NO",abril:"NO"},
+  {codigo:605566,nombre:"Pizarro Canihuan Jonathan Patricio",cargo:"Supervisor de Producción",seccion:"Tuneles S-continuos",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:605853,nombre:"Neira Levin Cesar Narciso",cargo:"Supervisor de Higiene",seccion:"Higiene",enero:"SI",febrero:"SI",marzo:"SI",abril:"SI"},
+  {codigo:606202,nombre:"Molina Schoettge Matias Douglas",cargo:"Supervisor de Producción",seccion:"Porciones",enero:"NO",febrero:"SI",marzo:"SI",abril:"SI"},
+  {codigo:606718,nombre:"Diocares Cárdenas Mariana Soledad",cargo:"Supervisor de Aseguramiento de Calidad",seccion:"Calidad",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:606998,nombre:"Flores Sepúlveda Patricio Omar",cargo:"Supervisor de Frigorífico",seccion:"Frigorífico",enero:"NO",febrero:"SI",marzo:"NO",abril:"SI"},
+  {codigo:607041,nombre:"Herrera Guerrero Rene Humberto",cargo:"Supervisor de Higiene",seccion:"Higiene",enero:"SI",febrero:"SI",marzo:"SI",abril:"SI"},
+  {codigo:607334,nombre:"González Cárdenas Rocio Estefanis",cargo:"Supervisor de Frigorífico",seccion:"Frigorífico",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"},
+  {codigo:607487,nombre:"Levicoy Guenchur José Sebastián",cargo:"Supervisor de Mantención",seccion:"Mantenimiento Planta",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"},
+  {codigo:607938,nombre:"Antisoli Remolcoy Nicolas Alberto",cargo:"Supervisor de Producción",seccion:"Filete",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:608377,nombre:"Orellana Orellana Ambar Karime Jordana",cargo:"Supervisor de Aseguramiento de Calidad",seccion:"Calidad",enero:"NO",febrero:"NO",marzo:"NO",abril:"NO"},
+  {codigo:608863,nombre:"Muñoz Cárdenas Diego Alejandro",cargo:"Supervisor de Aseguramiento de Calidad",seccion:"Calidad",enero:"NO",febrero:"NO",marzo:"NO",abril:"NO"},
+  {codigo:609581,nombre:"Medina Guerrero Juan Carlos",cargo:"Supervisor de Plantas de Tratamiento",seccion:"Riles",enero:"NO",febrero:"NO",marzo:"NO",abril:"NO"},
+  {codigo:609583,nombre:"González Poveda Miguel Eduardo",cargo:"Supervisor de Higiene",seccion:"Higiene",enero:"SI",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:610098,nombre:"Rondon Angel Luis Alejandro",cargo:"Supervisor de Producción",seccion:"Filete",enero:"NO",febrero:"NO",marzo:"SI",abril:"NO"},
+  {codigo:610988,nombre:"Uribe Manquemilla Manuel Humberto",cargo:"Supervisor de Producción",seccion:"Filete",enero:"NO",febrero:"SI",marzo:"SI",abril:"NO"},
+  {codigo:610426,nombre:"Hardy Gary Muñoz Soto",cargo:"Jefe de Mantención e Infraestructura",seccion:"Mantenimiento Planta",enero:"NO",febrero:"SI",marzo:"NO",abril:"NO"}
+];
+
+const months = ['enero','febrero','marzo','abril'];
+const monthLabels = {enero:'ENE',febrero:'FEB',marzo:'MAR',abril:'ABR'};
+const monthFull = {enero:'Enero',febrero:'Febrero',marzo:'Marzo',abril:'Abril'};
+
+// ── HELPERS ──────────────────────────────────────────────────
+function pctColor(p) {
+  if (p >= 70) return '#22C55E';
+  if (p >= 40) return '#F59E0B';
+  if (p >= 20) return '#F97316';
+  return '#EF4444';
+}
+function barColor(p) { return pctColor(p); }
+
+// ── BAR CHART ─────────────────────────────────────────────────
+function buildBarChart() {
+  const totals = months.map(m => {
+    const si = data.filter(r=>r[m]==='SI').length;
+    return {m, si, pct: Math.round(si/data.length*100)};
+  });
+  const maxPct = 100;
+  const chartH = 140;
+
+  const chart = document.getElementById('barChart');
+  chart.innerHTML = '';
+
+  totals.forEach((t,i) => {
+    const barH = Math.max(4, Math.round((t.pct/maxPct)*chartH));
+    const prev = i>0 ? totals[i-1].pct : null;
+    let delta = '';
+    if(prev !== null) {
+      const d = t.pct - prev;
+      delta = `<span class="kpi-delta ${d>=0?'delta-up':'delta-down'}">${d>=0?'▲':'▼'} ${Math.abs(d)}pp</span>`;
+    }
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.innerHTML = `
+      <div class="bar-outer" style="height:${chartH}px; width:100%;">
+        <div class="bar-fill" data-val="${t.pct}%"
+          style="height:${barH}px; background:${barColor(t.pct)}; width:100%;"></div>
+      </div>
+      <div class="bar-label">${monthLabels[t.m]}</div>
+      <div class="bar-sub" style="font-size:10px; color:#6B85A8;">${t.si}/${data.length}</div>
+      ${delta}
+    `;
+    chart.appendChild(col);
+  });
+}
+
+// ── PROGRESS BARS ─────────────────────────────────────────────
+function pctBar(container, rows, key) {
+  const groups = {};
+  rows.forEach(r => {
+    if(!groups[r[key]]) groups[r[key]] = {si:0, total:0};
+    groups[r[key]].total++;
+    if(r.abril==='SI') groups[r[key]].si++;
+  });
+  const sorted = Object.entries(groups).sort((a,b)=>b[1].si/b[1].total - a[1].si/a[1].total);
+  container.innerHTML = '';
+  sorted.forEach(([name, {si,total}]) => {
+    const pct = Math.round(si/total*100);
+    const el = document.createElement('div');
+    el.className = 'prog-row';
+    el.innerHTML = `
+      <div class="prog-meta">
+        <span class="prog-name">${name}</span>
+        <span class="prog-val">${si}/${total} · ${pct}%</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-bar" style="width:${pct}%; background:${pctColor(pct)};"></div>
+      </div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+// ── TABLE ─────────────────────────────────────────────────────
+function buildSectionFilter() {
+  const sel = document.getElementById('secFilter');
+  const secs = [...new Set(data.map(r=>r.seccion))].sort();
+  secs.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = s;
+    sel.appendChild(o);
+  });
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const total = months.filter(m=>r[m]==='SI').length;
+    const dotsHtml = months.map(m=>`<div class="dot ${r[m]==='SI'?'dot-si':'dot-no'}"></div>`).join('');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-code">${r.codigo}</td>
+      <td class="td-name">${r.nombre}</td>
+      <td><span class="td-sec">${r.seccion}</span></td>
+      <td class="td-cargo">${r.cargo}</td>
+      <td><span class="pill ${r.enero==='SI'?'pill-si':'pill-no'}">${r.enero}</span></td>
+      <td><span class="pill ${r.febrero==='SI'?'pill-si':'pill-no'}">${r.febrero}</span></td>
+      <td><span class="pill ${r.marzo==='SI'?'pill-si':'pill-no'}">${r.marzo}</span></td>
+      <td><span class="pill ${r.abril==='SI'?'pill-si':'pill-no'}">${r.abril}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;">
+          <div class="dots">${dotsHtml}</div>
+          <span class="dots-label">${total}/4</span>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('countBadge').textContent = `${rows.length} persona${rows.length!==1?'s':''}`;
+}
+
+function filterTable() {
+  const q    = document.getElementById('searchInput').value.toLowerCase();
+  const sec  = document.getElementById('secFilter').value;
+  const mes  = document.getElementById('mesFilter').value;
+  const cum  = document.getElementById('cumFilter').value;
+
+  const filtered = data.filter(r => {
+    const matchQ   = !q || r.nombre.toLowerCase().includes(q) || r.seccion.toLowerCase().includes(q) || r.cargo.toLowerCase().includes(q);
+    const matchSec = !sec || r.seccion === sec;
+    const matchMes = !mes || !cum || r[mes] === cum;
+    return matchQ && matchSec && matchMes;
+  });
+  renderTable(filtered);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+buildBarChart();
+pctBar(document.getElementById('secList'), data, 'seccion');
+pctBar(document.getElementById('cargoList'), data, 'cargo');
+buildSectionFilter();
+renderTable(data);
+
+// Animate bars after paint
+requestAnimationFrame(() => {
+  document.querySelectorAll('.prog-bar').forEach(b => {
+    const w = b.style.width;
+    b.style.width = '0';
+    setTimeout(()=>{ b.style.width = w; }, 80);
+  });
+});
+</script>
+</body>
+</html>
